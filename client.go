@@ -180,9 +180,6 @@ func (c *Client) post(ctx context.Context, config *apiConfig, apiReq interface{}
 	}
 
 	req.URL.RawQuery = q
-
-	println(req.URL.String())
-
 	return c.do(ctx, req)
 }
 
