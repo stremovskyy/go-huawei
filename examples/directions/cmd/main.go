@@ -87,7 +87,12 @@ func main() {
 	check(err)
 
 	pretty.Println(waypoints)
-	pretty.Println(routes)
+
+	for i, route := range routes {
+		for k, path := range route.Paths {
+			fmt.Printf("%d:%d-> %s\n%s\n", i, k, path.DurationInTrafficText, string(path.OverviewPolyline()))
+		}
+	}
 }
 
 func lookupRouteService(routeService string, r *go_huawei.DirectionsRequest) {

@@ -1,5 +1,7 @@
 package go_huawei
 
+import "github.com/twpayne/go-polyline"
+
 type DirectionsResponse struct {
 	Routes []Route `json:"routes"`
 	CommonResponse
@@ -59,3 +61,32 @@ const (
 	TurnSlightLeft  Action = "turn-slight-left"
 	TurnSlightRight Action = "turn-slight-right"
 )
+
+func (p *Path) Overview() []Coordinate {
+	if p == nil || p.Steps == nil {
+		return nil
+	}
+
+	var overviewPath []Coordinate
+
+	for _, step := range p.Steps {
+		overviewPath = append(overviewPath, step.Polyline...)
+	}
+
+	return overviewPath
+}
+
+func (p *Path) OverviewPolyline() []byte {
+	if p == nil || p.Steps == nil {
+		return nil
+	}
+
+	overviewPath := p.Overview()
+	coords := [][]float64{}
+
+	for _, coordinate := range overviewPath {
+		coords = append(coords, []float64{coordinate.Lat, coordinate.Lng})
+	}
+
+	return polyline.EncodeCoords(coords)
+}
