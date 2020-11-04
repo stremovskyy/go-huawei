@@ -3,7 +3,10 @@ package go_huawei
 type ReturnDesc string
 
 const (
-	ReturnDescOK                     ReturnDesc = "OK"
-	ReturnDescInvalidRequest         ReturnDesc = "INVALID_REQUEST"
-	ReturnDescUnknownErrorReturnDesc ReturnDesc = "UNKNOWN_ERROR"
+	ReturnDescOK             ReturnDesc = "OK"
+	ReturnDescInvalidRequest ReturnDesc = "INVALID_REQUEST"
+	ReturnDescUnknownError   ReturnDesc = "UNKNOWN_ERROR"
+	ReturnDescNotFound       ReturnDesc = "NOT_FOUND"
+	ReturnDescZeroResults    ReturnDesc = "ZERO_RESULTS"
+	ReturnDescRequestDenied  ReturnDesc = "REQUEST_DENIED"
 )

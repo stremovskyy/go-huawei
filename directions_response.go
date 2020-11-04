@@ -1,17 +1,8 @@
 package go_huawei
 
-import "encoding/json"
-
-func UnmarshalHuaweiDirectionsResponse(data []byte) (HuaweiDirectionsResponse, error) {
-	var r HuaweiDirectionsResponse
-	err := json.Unmarshal(data, &r)
-	return r, err
-}
-
-type HuaweiDirectionsResponse struct {
-	Routes     []Route    `json:"routes"`
-	ReturnCode ReturnCode `json:"returnCode"`
-	ReturnDesc string     `json:"returnDesc"`
+type DirectionsResponse struct {
+	Routes []Route `json:"routes"`
+	CommonResponse
 }
 
 type Route struct {
