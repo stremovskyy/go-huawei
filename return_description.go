@@ -9,4 +9,5 @@ const (
 	ReturnDescNotFound       ReturnDesc = "NOT_FOUND"
 	ReturnDescZeroResults    ReturnDesc = "ZERO_RESULTS"
 	ReturnDescRequestDenied  ReturnDesc = "REQUEST_DENIED"
+	ReturnDescOverQueryLimit ReturnDesc = "OVER_QUERY_LIMIT"
 )

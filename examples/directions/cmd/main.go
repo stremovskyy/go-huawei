@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	apiKey       = flag.String("key", "", "API Key for using Google Maps API.")
+	apiKey       = flag.String("key", "", "API Key for using Huawei Map-kit API.")
 	origin       = flag.String("origin", "", "The address or textual latitude/longitude value from which you wish to calculate directions.")
 	destination  = flag.String("destination", "", "The address or textual latitude/longitude value from which you wish to calculate directions.")
 	waypoints    = flag.String("waypoints", "", "The waypoints for driving directions request, | separated.")
@@ -26,7 +26,7 @@ var (
 )
 
 func usageAndExit(msg string) {
-	fmt.Fprintln(os.Stderr, msg)
+	_, _ = fmt.Fprintln(os.Stderr, msg)
 	fmt.Println("Flags:")
 	flag.PrintDefaults()
 	os.Exit(2)
@@ -64,9 +64,9 @@ func main() {
 	lookupTrafficModel(*trafficModel, request)
 
 	if *waypoints != "" {
-		strpoints := strings.Split(*waypoints, "|")
-		for _, strpoint := range strpoints {
-			request.Waypoints = append(request.Waypoints, go_huawei.ParseCoordinate(strpoint))
+		stringPoints := strings.Split(*waypoints, "|")
+		for _, stringPoint := range stringPoints {
+			request.Waypoints = append(request.Waypoints, go_huawei.ParseCoordinate(stringPoint))
 		}
 	}
 
@@ -86,7 +86,7 @@ func main() {
 	routes, err := client.Directions(context.Background(), request)
 	check(err)
 
-	pretty.Println(waypoints)
+	_, _ = pretty.Println(waypoints)
 
 	for i, route := range routes {
 		for k, path := range route.Paths {

@@ -24,17 +24,17 @@ func (c *Coordinate) isEmpty() bool {
 }
 
 func ParseCoordinate(str string) *Coordinate {
-	elems := strings.Split(str, ",")
-	if len(elems) != 2 {
+	elements := strings.Split(str, ",")
+	if len(elements) != 2 {
 		return nil
 	}
 
-	lat, err := strconv.ParseFloat(elems[0], 64)
+	lat, err := strconv.ParseFloat(elements[0], 64)
 	if err != nil {
 		return nil
 	}
 
-	lng, err := strconv.ParseFloat(elems[1], 64)
+	lng, err := strconv.ParseFloat(elements[1], 64)
 	if err != nil {
 		return nil
 	}

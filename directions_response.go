@@ -82,7 +82,7 @@ func (p *Path) OverviewPolyline() []byte {
 	}
 
 	overviewPath := p.Overview()
-	coords := [][]float64{}
+	var coords [][]float64
 
 	for _, coordinate := range overviewPath {
 		coords = append(coords, []float64{coordinate.Lat, coordinate.Lng})

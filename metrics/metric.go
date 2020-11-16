@@ -16,12 +16,12 @@ type Request interface {
 type NoOpReporter struct {
 }
 
-func (n NoOpReporter) NewRequest(name string) Request {
+func (n NoOpReporter) NewRequest(_ string) Request {
 	return noOpRequest{}
 }
 
 type noOpRequest struct {
 }
 
-func (n noOpRequest) EndRequest(ctx context.Context, err error, httpResp *http.Response, metro string) {
+func (n noOpRequest) EndRequest(_ context.Context, _ error, _ *http.Response, _ string) {
 }

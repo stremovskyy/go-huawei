@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
 
 	"golang.org/x/time/rate"
@@ -28,10 +26,6 @@ type Client struct {
 type ClientOption func(*Client) error
 
 var defaultRequestsPerSecond = 50
-
-const (
-	ExperienceIdHeaderName = "X-GOOG-MAPS-EXPERIENCE-ID"
-)
 
 func NewClient(options ...ClientOption) (*Client, error) {
 	c := &Client{
@@ -130,7 +124,7 @@ func (c *Client) awaitRateLimiter(ctx context.Context) error {
 	return c.rateLimiter.Wait(ctx)
 }
 
-func (c *Client) get(ctx context.Context, config *apiConfig, apiReq interface{}, routeService RouteService) (*http.Response, error) {
+func (c *Client) get(ctx context.Context, config *apiConfig, _ interface{}, _ RouteService) (*http.Response, error) {
 	if err := c.awaitRateLimiter(ctx); err != nil {
 		return nil, err
 	}
@@ -216,17 +210,11 @@ func (c *Client) postJSON(ctx context.Context, config *apiConfig, apiReq interfa
 	defer httpResp.Body.Close()
 
 	err = json.NewDecoder(httpResp.Body).Decode(resp)
-	requestMetrics.EndRequest(ctx, err, httpResp, httpResp.Header.Get("x-goog-maps-metro-area"))
+	requestMetrics.EndRequest(ctx, err, httpResp, httpResp.Header.Get("x-huawei-test"))
 	return err
 }
 
-type binaryResponse struct {
-	statusCode  int
-	contentType string
-	data        io.ReadCloser
-}
-
-func (c *Client) generateAuthQuery(path string, acceptsApiKey bool) (string, error) {
+func (c *Client) generateAuthQuery(_ string, acceptsApiKey bool) (string, error) {
 	if c.apiKey != "" {
 		if acceptsApiKey && len(c.apiKey) > 0 {
 			return internal.SignURLWithApiKey(c.apiKey)
@@ -234,23 +222,4 @@ func (c *Client) generateAuthQuery(path string, acceptsApiKey bool) (string, err
 	}
 
 	return "", errors.New("map-kit: API Key missing")
-}
-
-// commonResponse contains the common response fields to most API calls
-type commonResponse struct {
-	// Status contains the status of the request, and may contain debugging
-	// information to help you track down why the call failed.
-	Status string `json:"status"`
-
-	// ErrorMessage is the explanatory field added when Status is an error.
-	ErrorMessage string `json:"error_message"`
-}
-
-// StatusError returns an error if this object has a Status different
-// from OK or ZERO_RESULTS.
-func (c *commonResponse) StatusError() error {
-	if c.Status != "OK" && c.Status != "ZERO_RESULTS" {
-		return fmt.Errorf("map-kit: %s - %s", c.Status, c.ErrorMessage)
-	}
-	return nil
 }

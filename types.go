@@ -25,7 +25,7 @@ const (
 // Distance is the API representation for a distance between two points.
 type Distance struct {
 	// HumanReadable is the human friendly distance. This is rounded and in an
-	// appropriate unit for the request. The units can be overriden with a request
+	// appropriate unit for the request. The units can be overridden with a request
 	// parameter.
 	HumanReadable string `json:"text"`
 	// Meters is the numeric distance, always in meters. This is intended to be used

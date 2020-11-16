@@ -39,7 +39,7 @@ func NewDateTime(t time.Time) *DateTime {
 
 	loc := t.Location()
 	return &DateTime{
-		Text:     t.Format(time.RFC1123), // TODO(samthor): better format
+		Text:     t.Format(time.RFC1123),
 		TimeZone: loc.String(),
 		Value:    t.UnixNano() / int64(time.Second),
 	}
