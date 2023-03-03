@@ -10,7 +10,7 @@ import (
 
 	"github.com/kr/pretty"
 
-	"github.com/karmadon/go-huawei"
+	"github.com/stremovskyy/go-huawei"
 )
 
 var (

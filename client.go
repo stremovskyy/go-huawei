@@ -2,15 +2,18 @@ package go_huawei
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net/http"
 
 	"golang.org/x/time/rate"
 
-	"github.com/karmadon/go-huawei/internal"
-	"github.com/karmadon/go-huawei/metrics"
+	"github.com/stremovskyy/go-huawei/internal"
+	"github.com/stremovskyy/go-huawei/metrics"
 )
 
 type Client struct {
@@ -124,7 +127,7 @@ func (c *Client) awaitRateLimiter(ctx context.Context) error {
 	return c.rateLimiter.Wait(ctx)
 }
 
-func (c *Client) get(ctx context.Context, config *apiConfig, _ interface{}, _ RouteService) (*http.Response, error) {
+func (c *Client) get(ctx context.Context, config *apiConfig, _ interface{}, _ RouteService) ([]byte, error) {
 	if err := c.awaitRateLimiter(ctx); err != nil {
 		return nil, err
 	}
@@ -147,7 +150,7 @@ func (c *Client) get(ctx context.Context, config *apiConfig, _ interface{}, _ Ro
 	return c.do(ctx, req)
 }
 
-func (c *Client) post(ctx context.Context, config *apiConfig, apiReq interface{}, routeService RouteService) (*http.Response, error) {
+func (c *Client) post(ctx context.Context, config *apiConfig, apiReq interface{}, routeService RouteService) ([]byte, error) {
 	if err := c.awaitRateLimiter(ctx); err != nil {
 		return nil, err
 	}
@@ -159,17 +162,24 @@ func (c *Client) post(ctx context.Context, config *apiConfig, apiReq interface{}
 
 	body, err := json.Marshal(apiReq)
 	if err != nil {
-		return nil, err
+		return nil, NewGoHuaweiError("marshal json", err)
 	}
+
 	req, err := http.NewRequest("POST", host+config.path+string(routeService), bytes.NewBuffer(body))
 	if err != nil {
-		return nil, err
+		e := NewGoHuaweiError("post request", err)
+		e.AddRawRequest(body)
+
+		return nil, e
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
 	q, err := c.generateAuthQuery(config.path, config.acceptsApiKey)
 	if err != nil {
+		e := NewGoHuaweiError("post request", err)
+		e.AddRawRequest(body)
 		return nil, err
 	}
 
@@ -177,40 +187,88 @@ func (c *Client) post(ctx context.Context, config *apiConfig, apiReq interface{}
 	return c.do(ctx, req)
 }
 
-func (c *Client) do(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (c *Client) do(ctx context.Context, req *http.Request) ([]byte, error) {
 	client := c.httpClient
 	if client == nil {
 		client = http.DefaultClient
 	}
 
-	return client.Do(req.WithContext(ctx))
+	resp, err := client.Do(req.WithContext(ctx))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	// Check that the server actually sent compressed data
+	var reader io.ReadCloser
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		reader, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		defer reader.Close()
+	default:
+		reader = resp.Body
+	}
+
+	return ioutil.ReadAll(reader)
 }
 
 func (c *Client) getJSON(ctx context.Context, config *apiConfig, apiReq *DirectionsRequest, resp interface{}, routeService RouteService) error {
 	requestMetrics := c.metricReporter.NewRequest(config.path)
+
 	httpResp, err := c.get(ctx, config, apiReq, routeService)
 	if err != nil {
 		requestMetrics.EndRequest(ctx, err, httpResp, "")
 		return err
 	}
-	defer httpResp.Body.Close()
 
-	err = json.NewDecoder(httpResp.Body).Decode(resp)
-	requestMetrics.EndRequest(ctx, err, httpResp, httpResp.Header.Get("Server"))
+	if httpResp == nil {
+		e := NewGoHuaweiError("empty response", err)
+		e.AddRawResponse(httpResp)
+		return e
+	}
+
+	err = json.Unmarshal(httpResp, resp)
+	if err != nil {
+		e := NewGoHuaweiError("unmarshal response", err)
+		e.AddRawResponse(httpResp)
+		return err
+	}
+
+	requestMetrics.EndRequest(ctx, err, httpResp, "")
+
 	return err
 }
 
 func (c *Client) postJSON(ctx context.Context, config *apiConfig, apiReq interface{}, resp interface{}, routeService RouteService) error {
 	requestMetrics := c.metricReporter.NewRequest(config.path)
+
 	httpResp, err := c.post(ctx, config, apiReq, routeService)
 	if err != nil {
 		requestMetrics.EndRequest(ctx, err, httpResp, "")
 		return err
 	}
-	defer httpResp.Body.Close()
 
-	err = json.NewDecoder(httpResp.Body).Decode(resp)
-	requestMetrics.EndRequest(ctx, err, httpResp, httpResp.Header.Get("x-huawei-test"))
+	if httpResp == nil {
+		e := NewGoHuaweiError("empty response", err)
+		e.AddRawResponse(httpResp)
+		return e
+	}
+
+	err = json.Unmarshal(httpResp, resp)
+	if err != nil {
+		e := NewGoHuaweiError("unmarshal response", err)
+		e.AddRawResponse(httpResp)
+		return err
+	}
+
+	requestMetrics.EndRequest(ctx, err, httpResp, "")
+
 	return err
 }
 

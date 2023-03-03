@@ -35,7 +35,8 @@ func (c *Client) Directions(ctx context.Context, directionsRequest *DirectionsRe
 	}
 
 	if err := response.StatusError(); err != nil {
-		return nil, err
+		e := NewGoHuaweiApiError(response.ReturnCode, response.ReturnDesc, "general request")
+		return nil, e
 	}
 
 	return response.Routes, nil
